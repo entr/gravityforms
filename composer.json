@@ -1,0 +1,10 @@
+{
+    "name": "rocketgenius/gravityforms",
+    "type": "wordpress-plugin",
+    "description": "Easily create web forms and manage form entries within the WordPress admin.",
+    "license": "GPL-3.0",
+    "authors": [],
+    "require": {
+        "composer/installers": "~1.0"
+    }
+}
