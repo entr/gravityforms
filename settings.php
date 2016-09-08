@@ -69,6 +69,15 @@ class GFSettings {
 				die( esc_html__( "You don't have adequate permission to uninstall Gravity Forms.", 'gravityforms' ) );
 			}
 
+			//De-registering site
+			GFForms::include_gravity_api();
+
+			//Remove association between site and license
+			gapi()->update_site( '' );
+
+			//Delete site key and site secret
+			gapi()->purge_site_credentials();
+
 			//dropping all tables
 			RGFormsModel::drop_tables();
 
@@ -451,6 +460,33 @@ class GFSettings {
 			</table>
 		<?php
 		}
+
+		if ( isset( $_GET['gform_debug'] ) ) {
+
+			GFForms::include_gravity_api();
+			?>
+			<div class="hr-divider"></div>
+
+			<h3><span><i class="fa fa-bug"></i> <?php esc_html_e( 'Debug Information', 'gravityforms' ); ?><span></h3>
+			<table class="form-table">
+
+				<tr valign="top">
+					<th scope="row"><label><?php esc_html_e( 'Site Key', 'gravityforms' ); ?></label></th>
+					<td class="installation_item_cell" colspan="2">
+						<?php echo esc_html( gapi()->get_site_key() ) ?>
+					</td>
+				</tr>
+				<tr valign="top">
+					<th scope="row"><label><?php esc_html_e( 'Site Secret', 'gravityforms' ); ?></label></th>
+					<td class="installation_item_cell" colspan="2">
+						<?php echo esc_html( gapi()->get_site_secret() ); ?>
+					</td>
+				</tr>
+
+			</table>
+		<?php
+		}
+
 		self::page_footer();
 	}
 
@@ -540,9 +576,10 @@ class GFSettings {
 					<?php
 					foreach ( $setting_tabs as $tab ) {
 						$name = $tab['label'];
+						$url  = add_query_arg( array( 'subview' => $tab['name'] ), admin_url( 'admin.php?page=gf_settings' ) );
 						?>
 						<li <?php echo urlencode( $current_tab ) == $tab['name'] ? "class='active'" : '' ?>>
-							<a href="<?php echo esc_url( add_query_arg( array( 'subview' => $tab['name'] ) ) ); ?>"><?php echo esc_html( $tab['label'] ) ?></a>
+							<a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $tab['label'] ) ?></a>
 						</li>
 					<?php
 					}
@@ -550,7 +587,7 @@ class GFSettings {
 				</ul>
 
 				<div id="gform_tab_container" class="gform_tab_container">
-					<div class="gform_tab_content" id="tab_<?php echo $current_tab ?>">
+					<div class="gform_tab_content" id="tab_<?php echo esc_attr( $current_tab ); ?>">
 
 	<?php
 	}
@@ -605,4 +642,23 @@ class GFSettings {
 		return $akismet_setting;
 	}
 
+	public static function action_delete_option_rg_gforms_key() {
+		GFForms::include_gravity_api();
+
+		if ( gapi()->is_site_registered() ) {
+			gapi()->update_site( '' );
+		}
+	}
+
+	public static function filter_pre_update_option_rg_gforms_key( $value, $old_value ){
+
+		if ( $value !== $old_value ) {
+			GFForms::include_gravity_api();
+
+			if ( gapi()->is_site_registered() ) {
+				gapi()->update_site( $value );
+			}
+		}
+		return $value;
+	}
 }
